@@ -1,6 +1,6 @@
  
 from passlib.context import CryptContext # Python library that handles secure password hashing. never store plain text passwords
-from features.login.services.security_service_interface import SecurityServiceInterface
+from app.features.login.services.security_service_interface import SecurityServiceInterface
 
 class SecurityService(SecurityServiceInterface):
     def __init__(self):

@@ -1,10 +1,11 @@
 #AuthService - handles business logic
+# AuthService - handles business logic
 from fastapi import HTTPException, status
-from features.login.repositories.user_repository_interface import UserRepositoryInterface
-from features.login.entities.user import UserEntity
-from features.login.services.auth_service_interface import AuthServiceInterface
-from features.login.services.security_service_interface import SecurityServiceInterface
-from features.login.services.token_service import TokenService
+from app.features.login.repositories.user_repository_interface import UserRepositoryInterface
+from app.features.login.entities.user_entity import UserEntity
+from app.features.login.services.auth_service_interface import AuthServiceInterface
+from app.features.login.services.security_service_interface import SecurityServiceInterface
+from app.features.login.services.token_service import TokenService
 
 class AuthService(AuthServiceInterface):
     def __init__(
@@ -18,8 +19,9 @@ class AuthService(AuthServiceInterface):
         self.token = token_service
 
     # Validates uniqueness, hashes password, saves user
-    def register_user(self, email: str, password: str) -> None:
-        if self.user_repo.get_by_email(email):
+    async def register_user(self, email: str, password: str) -> None:
+        existing_user = await self.user_repo.get_by_email(email)
+        if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User already exists"
@@ -27,11 +29,11 @@ class AuthService(AuthServiceInterface):
 
         hashed = self.security.hash_password(password)
         user = UserEntity(email=email, hashed_password=hashed)
-        self.user_repo.save(user)
+        await self.user_repo.save(user)
 
     # Verifies credentials, returns JWT token
-    def login_user(self, email: str, password: str) -> str:
-        user = self.user_repo.get_by_email(email)
+    async def login_user(self, email: str, password: str) -> str:
+        user = await self.user_repo.get_by_email(email)
         if not user or not self.security.verify_password(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,6 +1,6 @@
 # Abstracts user storage
 from abc import ABC, abstractmethod
-from features.login.entities.user import UserEntity
+from app.features.login.entities.user_entity import UserEntity
 from typing import Optional
 
 class UserRepositoryInterface(ABC):

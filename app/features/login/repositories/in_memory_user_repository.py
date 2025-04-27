@@ -1,6 +1,6 @@
 from typing import Dict
-from features.login.entities.user import UserEntity
-from features.login.repositories.user_repository_interface import UserRepositoryInterface
+from app.features.login.entities.user_entity import UserEntity
+from app.features.login.repositories.user_repository_interface import UserRepositoryInterface
 from typing import Optional
 
 class InMemoryUserRepository(UserRepositoryInterface):

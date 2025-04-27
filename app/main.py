@@ -1,26 +1,28 @@
 from fastapi import FastAPI
-from features.login.routers.auth_router import get_auth_router
-from features.login.repositories.in_memory_user_repository import InMemoryUserRepository
-from features.login.services.auth_service import AuthService
-from features.login.services.security import SecurityService
-from features.login.services.token_service import TokenService
+from app.features.login.routers.auth_router import get_auth_router
+from app.features.login.services.auth_service import AuthService
+from app.features.login.services.security import SecurityService
+from app.features.login.services.token_service import TokenService
+from app.features.login.repositories.sqlite_user_repository import SQLiteUserRepository
+from app.shared.database.session import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 app = FastAPI()
 
-# Instantiate core dependencies
-user_repo = InMemoryUserRepository()
-security_service = SecurityService()
-token_service = TokenService()
+@app.get("/")
+def root():
+    return {"message": "Welcome to wishlist_wishperer!"}
 
-# Inject into AuthService (high-level module depends on abstractions)
-auth_service = AuthService(
-    user_repo=user_repo,
-    security_service=security_service,
-    token_service=token_service
-)
+# ✅ Add auth router during app startup
+@app.on_event("startup")
+async def setup_routers():
+    # get_db() is a generator, so we use async for to extract session
+    async for db in get_db():
+        user_repo = SQLiteUserRepository(db)
+        security_service = SecurityService()
+        token_service = TokenService()
+        auth_service = AuthService(user_repo, security_service, token_service)
+        router = get_auth_router(auth_service)
 
-# Inject into router
-auth_router = get_auth_router(auth_service)
-
-# Register router
-app.include_router(auth_router)
+        app.include_router(router)
+        break  # ✅ important! prevents generator exhaustion
